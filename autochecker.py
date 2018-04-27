@@ -17,7 +17,6 @@ def download_json(url, filename):
 # we parse firmwares.json and board.json
 # the last one is just to get the board id for tsschecker
 def parse_json(model, type):
-	
 	if type == "version": # latest version
 		json_file = "firmwares.json"
 		download_json("https://api.ipsw.me/v3/"+ model + "/latest/info.json", json_file)
@@ -35,6 +34,44 @@ def parse_json(model, type):
 
 	else : 
 		print("error")
+
+def save_info(model, ecid, version):
+	f = open('latest_version.txt', 'a')
+	device_info = "[device] " + model + "\n"
+	ecid_info = "[ecid] " + ecid + "\n"
+	version_info = "[version] " + version + "\n\n"
+	f.write(device_info)
+	f.write(ecid_info)
+	f.write(version_info)
+	f.close()
+
+def isNewVersion(model, ecid, version):
+	device2check = ""
+	version2check = ""
+	if not os.path.isfile("latest_version.txt"):
+		return True
+
+	with open("latest_version.txt") as f:
+		line  = f.readlines()
+		for i in range(0, len(line)):
+			check = line[i].split(' ')[0]
+			if check == "[device]":
+				device2check = line[i].split(' ')[1]
+				device2check = device2check.split('\n')[0]
+				#print(device2check)
+			elif check == "[ecid]" :
+				ecid2check = line[i].split(' ')[1]
+				ecid2check = ecid2check.split('\n')[0]
+				#print(ecid2check)
+			elif check == "[version]" :
+				version2check = line[i].split(' ')[1]
+				version2check = version2check.split('\n')[0]
+				#print(version2check)
+
+			if model == device2check and version == version2check and ecid == ecid2check:
+				return False # same version
+
+		return True
 
 # simple function to save blobs by calling tsschecker
 def save_blobs(model, board_id, version, ecid):
@@ -77,7 +114,10 @@ if __name__ == '__main__':
 				ecid_list.append(ecid)
 
 	for i in range(0,len(device_list)):
-		print("%s a pour ecid %s" % (device_list[i], ecid_list[i]))
 		device_version = parse_json(device_list[i], "version")
 		board_model    = parse_json(device_list[i], "board")
-		save_blobs(device_list[i], board_model, device_version, ecid_list[i])
+		if isNewVersion(device_list[i], ecid_list[i], device_version) == True:
+			save_info(device_list[i], ecid_list[i], device_version)
+			save_blobs(device_list[i], board_model, device_version, ecid_list[i])
+		else:
+			print("[i] SHSH2 for %s on %s already exists" % (device_list[i], device_version))
