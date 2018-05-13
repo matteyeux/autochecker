@@ -28,3 +28,7 @@ You can complete the file named `devices.sample` then use it with `autochecker` 
 `./autochecker devices.sample`
 
 Make sure [tsschecker](https://github.com/tihmstar/tsschecker) is installed in your PATH.
+
+### TODO
+- Add requirements.txt
+- Add to crontab
